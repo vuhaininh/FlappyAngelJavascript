@@ -12,7 +12,7 @@ flabbyangel.Background = function(x,y) {
     this.bgImage = 'assets/background.jpg';
     this.setSize(x, y).setFill("#6F79FC").setAnchorPoint(0,0);
     this.background1 = new lime.Sprite().setSize(2800,1004).setPosition(0,0).setAnchorPoint(0,0).setFill(this.bgImage);
-    this.background2 = new lime.Sprite().setSize(2800,1004).setPosition(2799,0).setAnchorPoint(0,0).setFill(this.bgImage);
+    this.background2 = new lime.Sprite().setSize(2800,1004).setPosition(2798,0).setAnchorPoint(0,0).setFill(this.bgImage);
     var backgroundLayer = new lime.Layer().setPosition(0,0).setAnchorPoint(0,0).appendChild(this.background1);
     backgroundLayer.appendChild(this.background2);
     
@@ -23,9 +23,9 @@ flabbyangel.Background = function(x,y) {
     lime.scheduleManager.scheduleWithDelay (function() { 
 		var p = backgroundLayer.getPosition();
                 
-		if(p.x < swaps * -2800){ 
+		if(p.x < swaps * -2798){ 
 			var next = swaps % 2 ?this.background1 : this.background2; 
-			next.setPosition(next.getPosition().x + 2799 * 2, 0); 
+			next.setPosition(next.getPosition().x + 2798 * 2, 0); 
 			swaps++;
 		} 
 	}, this, 100);

@@ -14,7 +14,7 @@ goog.require('flabbyangel.Button');
 goog.require('flabbyangel.Angel');
 goog.require('flabbyangel.Background');
 goog.require('flabbyangel.Game');
-
+goog.require('lime.transitions.Dissolve');
 //constant iPad size
 flabbyangel.WIDTH = 720;
 flabbyangel.HEIGHT = 1004;
@@ -24,7 +24,7 @@ flabbyangel.start = function(){
 
 	flabbyangel.director = new lime.Director(document.body, flabbyangel.WIDTH, flabbyangel.HEIGHT);
 	flabbyangel.director.makeMobileWebAppCapable();
-	flabbyangel.director.setDisplayFPS(false);
+	flabbyangel.director.setDisplayFPS(true);
 	flabbyangel.loadMenu();
 };
 // load menu scene
@@ -54,7 +54,7 @@ flabbyangel.loadMenu = function() {
 
 	var btn = flabbyangel.makeButton('Start').setPosition(0, 200).setSize(200,70);
 	goog.events.listen(btn, 'click', function() {
-	    flabbyangel.director.replaceScene(new lime.Scene(), lime.transitions.Dissolve,1000);
+	    flabbyangel.director.replaceScene(new flabbyangel.Game(), lime.transitions.Dissolve);
 	});       
 	btns.appendChild(btn);
 

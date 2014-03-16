@@ -15,7 +15,7 @@ flabbyangel.Ground = function(posX,posY) {
     this.AddShape(ground);
     var img = 'assets/line.png';
     this.figure = (new lime.Sprite)
-        .setFill(img)
+        .setFill(img).setOpacity(0.7)
 	    .setSize(flabbyangel.WIDTH, 40).setPosition(posX,posY);
     
     

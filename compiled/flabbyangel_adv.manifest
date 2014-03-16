@@ -2,12 +2,22 @@ CACHE MANIFEST
 
 # If you use more files you need to manually list them here.
 # Don't remove next line
-# Updated on: 2014-03-15 20:37:46
+# Updated on: 2014-03-16 16:30:21
 
 flabbyangel_adv.js
-assets/startup.jpg
-assets/startup_ipad.jpg
-assets/icon.png
-
+assets/a1.jpg
+assets/a2.jpg
+assets/a3.png
+assets/angel.png
+assets/light.jpg
+assets/line.jpg
+assets/obstacle.png
+assets/ready.png
+assets/title.png
+assets/background.jpg
+assets/gem.mp3
+assets/punch.mp3
+assets/score.mp3
+assets/wing.mp3
 NETWORK:
 *

@@ -1,6 +1,7 @@
 goog.provide('flabbyangel.Game');
 goog.require('flabbyangel.Angel');
 goog.require('flabbyangel.World');
+goog.require('flabbyangel.Rune');
 goog.require('flabbyangel.Obstacle');
 goog.require('flabbyangel.Ground');
 goog.require('lime.Sprite');
@@ -18,6 +19,7 @@ flabbyangel.Game = function() {
    this.wingSound = new lime.audio.Audio('assets/wing.mp3');
    this.punchSound = new lime.audio.Audio('assets/punch.mp3');
    this.scoreSound = new lime.audio.Audio('assets/score.mp3');
+   this.gemSound = new lime.audio.Audio('assets/gem.mp3');
    //gravities
    this.gravity = new box2d.Vec2(0, 1800);
    this.rgravity = new box2d.Vec2(0, -1800);
@@ -29,11 +31,20 @@ flabbyangel.Game = function() {
     var angelLayer = new lime.Layer();
     this.angel = new flabbyangel.Angel(flabbyangel.WIDTH/5,flabbyangel.HEIGHT/2);
     angelLayer.appendChild(this.angel.flyingForm());
-    this.appendChild(angelLayer);
-    
+    this.angel.generateClones();
+    angelLayer.appendChild(this.angel.image1);
+    angelLayer.appendChild(this.angel.image2);
+    this.appendChild(angelLayer);    
     this.angel._body = this.world.CreateBody(this.angel);
+    this.angel._gravity = new box2d.Vec2(0, -this.angel._body.GetMass()*this.gravity.y*0.5);
     //Obstacle
     this.GenerateObstacles(); 
+    this.gemstatus = new flabbyangel.Rune();
+    //this.gemstatus.setPosition(flabbyangel.WIDTH/2,0.93*flabbyangel.HEIGHT);
+    this.gemstatus.setType(1);
+    this.gemstatus.setPosition(flabbyangel.WIDTH/2+150,flabbyangel.HEIGHT/2-20);
+    this.appendChild(this.gemstatus);
+    this.gemstatus.runAction(this.gemstatus.normalanim);
      //score
     var scoreLayer = new lime.Layer();
     this.score = new lime.Label().setFontColor('#FFF').setFontSize(100).setText(this.points).setPosition(flabbyangel.WIDTH/2-40, flabbyangel.HEIGHT/6)
@@ -48,7 +59,7 @@ flabbyangel.Game = function() {
     ceiling_body = this.world.addObject(ceiling);
     this.appendChild(ceiling.figure);
     this.appendChild(ground.figure);
-      
+     
     //guideLayer
     this.guideLayer = new lime.Layer().setPosition(flabbyangel.WIDTH / 3, 0);
     var ready = new lime.Sprite().setFill('assets/ready.png').setPosition(flabbyangel.WIDTH / 5, flabbyangel.HEIGHT / 3);
@@ -122,8 +133,7 @@ flabbyangel.Game.prototype.getHighScore= function(){
     if(typeof(Storage)!=="undefined"){  
         if(localStorage.highscore == undefined ||localStorage.highscore == "undefined"){
                 highscore = 0;
-                localStorage.setItem("highscore",highscore);   
-                
+                localStorage.setItem("highscore",highscore);            
         }
         else
             highscore = parseInt(localStorage.highscore);      
@@ -143,27 +153,57 @@ flabbyangel.Game.prototype.step_ = function(dt){
     this.world.Step(dt / 1000, 3);
     var pos = this.angel._body.GetCenterPosition().clone();
     this.angel.figure.setPosition(pos);
+    this.angel.image1.setPosition(pos.x,pos.y-150);
+    this.angel.image2.setPosition(pos.x,pos.y+150);
     if(this.angel._body.GetContactList()!= null){
         if(this.angel._body.GetContactList().other != ceiling_body ){
             this.newGame();
         }
-    }                
+    }
+    if(this.gem.active == true){
+        if (pos.x >= this.gem.getPosition().x -50&&pos.x <= this.gem.getPosition().x +50 &&(pos.y >= this.gem.getPosition().y -50&&pos.y <= this.gem.getPosition().y +50 )){
+            this.gem.active = false;
+            this.gem.setHidden(true);
+            this.gemstatus.setType(this.gem.type);
+            if(this.gem.type == 2){
+                this.angel.clone = true;
+                this.angel.showClones();
+            }   
+            else{
+                this.angel.status = this.gem.type;
+                this.angel.hideClones();
+            }
+            this.gemSound.play();
+            this.gem.generateRuneType();      
+        }
+
+    }
 };
 flabbyangel.Game.prototype.pressHandler_ = function(e) {
     //renove guide layer
     if(!this.inGame){
         this.guideLayer.removeAllChildren();
         lime.scheduleManager.schedule(this.step_ ,this);
+        var moveto = new lime.animation.MoveTo(flabbyangel.WIDTH/2,0.93*flabbyangel.HEIGHT);
+        this.gemstatus.runAction(moveto);
+        game = this;
+        goog.events.listen(moveto,lime.animation.Event.STOP,function(){
+            game.angel.status = 1;
+        
+        });
     };
     this.wingSound.play();
     this.inGame = true;
-    this.angel.moveUp(this.angel._body);
+    if(this.angel.status == 0)
+        this.angel.moveUp();
+    else if(this.angel.status == 1)
+        this.angel.moveDown();
 };
 flabbyangel.Game.prototype.GenerateObstacles = function(){
     this.obstacles = new Array();
     this.width = 120;
-    this.space = 220;
-    this.distance = 380;
+    this.space = 240;
+    this.distance = 400;
     this.GenerateObstacle(0,flabbyangel.WIDTH*2);
     this.GenerateObstacle(2,flabbyangel.WIDTH*2 + this.distance);
     this.GenerateObstacle(4,flabbyangel.WIDTH*2 + this.distance*2);
@@ -179,20 +219,35 @@ flabbyangel.Game.prototype.GenerateObstacle = function(i,x){
     this.appendChild(this.obstacles[i+1].AddFigure(x,850-height2/2,this.width,height2,true));
     this.obstacles[i+1]._body = this.world.CreateBody(this.obstacles[i+1]);
     this.obstacles[i+1]._gravity = new box2d.Vec2(0, -this.obstacles[i+1]._body.GetMass()*this.gravity.y);
-
+    if (i===0){  
+        var pos1= this.obstacles[i]._body.GetCenterPosition().clone();
+        this.gem = new flabbyangel.Rune();
+        this.appendChild(this.gem);
+        this.gem.y = height + parseInt(goog.math.uniformRandom(50, 200));
+        this.gem.setPosition(pos1.x+190,this.gem.y);
+        this.gem.runAction(this.gem.normalanim);
+    }
 };
-flabbyangel.Game.prototype.ForceObstacles = function(){
+flabbyangel.Game.prototype.ForceObstacles = function(){             
     for(var i = 0; i <= 5; i=i+2){
         var pos1= this.obstacles[i]._body.GetCenterPosition().clone();
         this.obstacles[i].figure.setPosition(pos1);
         var pos2= this.obstacles[i+1]._body.GetCenterPosition().clone();
         this.obstacles[i+1].figure.setPosition(pos2);
-        if(pos1.x <= -this.distance){       
+        if(i==0)
+            this.gem.setPosition(pos1.x+190,this.gem.y);
+        if(pos1.x <= -this.distance){  
+           if(i==0)
+            this.gem.generateRuneType();
            var height = parseInt(goog.math.uniformRandom(flabbyangel.HEIGHT/4, flabbyangel.HEIGHT/2));
+          if(i==0)
+            this.gem.y = height + parseInt(goog.math.uniformRandom(50, 200));
            var height2= 850 - height - this.space;
            this.obstacles[i].UpdateObstacle(this.width,height,pos1.x+3*this.distance,height/2,this.world);
-            this.obstacles[i+1].UpdateObstacle(this.width,height2,pos2.x+3*this.distance,850-height2/2,this.world);
+           this.obstacles[i+1].UpdateObstacle(this.width,height2,pos2.x+3*this.distance,850-height2/2,this.world);
         }
+        if(this.angel.status == 1)
+             this.angel.moveFloat();
         this.obstacles[i]._body.ApplyForce(this.obstacles[i]._gravity,this.obstacles[i]._body.GetWorldPoint(new box2d.Vec2(0, 0)));
         this.obstacles[i+1]._body.ApplyForce(this.obstacles[i+1]._gravity,this.obstacles[i+1]._body.GetWorldPoint(new box2d.Vec2(0, 0)));
         this.obstacles[i]._body.SetLinearVelocity(this.moveVel);  
@@ -202,7 +257,11 @@ flabbyangel.Game.prototype.ForceObstacles = function(){
                 this.points++;
                 this.score.setText(this.points);
                 this.scoreSound.play();
-                this.obstacles[i].isScore = false;   
+                this.obstacles[i].isScore = false;
+                if((this.points %3) == 0){
+                    this.gem.setHidden(false);
+                    this.gem.active = true;
+                }                      
             }    
         }
     }   
